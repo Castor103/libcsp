@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdlib.h>
 
 #include <csp/csp.h>
+#include <csp/arch/csp_thread.h>
 #include <csp/csp_endian.h>
 #include <csp/arch/csp_semaphore.h>
 
@@ -224,6 +225,8 @@ int csp_can_tx(const csp_route_t * ifroute, csp_packet_t *packet)
 		return CSP_ERR_DRIVER;
 	}
 
+	csp_sleep_ms(10);	// 2021-10-19, castor, add delay - more than 9ms 1/9 , 10 ms ok 30 case all pass
+
 	/* Send next frames if not complete */
 	while (tx_count < packet->length) {
 		/* Calculate frame data bytes */
@@ -245,6 +248,8 @@ int csp_can_tx(const csp_route_t * ifroute, csp_packet_t *packet)
 			iface->tx_error++;
 			return CSP_ERR_DRIVER;
 		}
+
+		csp_sleep_ms(10);	// 2021-10-19, castor, add delay - more than 9ms 1/9 , 10 ms ok 30 case all pass
 	}
 
 	csp_buffer_free(packet);
