@@ -100,7 +100,6 @@ static int csp_can_tx_frame(void * driver_data, uint32_t id, const uint8_t * dat
 	if (dlc > 8) {
 		return CSP_ERR_INVAL;
 	}
-
 	struct can_frame frame = {.can_id = id | CAN_EFF_FLAG,
                                   .can_dlc = dlc};
         memcpy(frame.data, data, dlc);
@@ -112,7 +111,7 @@ static int csp_can_tx_frame(void * driver_data, uint32_t id, const uint8_t * dat
 			csp_log_warn("%s[%s]: write() failed, errno %d: %s", __FUNCTION__, ctx->name, errno, strerror(errno));
 			return CSP_ERR_TX;
 		}
-		csp_sleep_ms(5);
+		csp_sleep_ms(5);	// original = 5
 		elapsed_ms += 5;
 	}
 
@@ -131,10 +130,10 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 #if (CSP_HAVE_LIBSOCKETCAN)
 	/* Set interface up - this may require increased OS privileges */
 	if (bitrate > 0) {
-		can_do_stop(device);
-		can_set_bitrate(device, bitrate);
-		can_set_restart_ms(device, 100);
-		can_do_start(device);
+		// can_do_stop(device);
+		// can_set_bitrate(device, bitrate);
+		// can_set_restart_ms(device, 100);
+		// can_do_start(device);
 	}
 #endif
 
@@ -149,7 +148,7 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	ctx->iface.interface_data = &ctx->ifdata;
 	ctx->iface.driver_data = ctx;
 	ctx->ifdata.tx_func = csp_can_tx_frame;
-
+	
 	/* Create socket */
 	if ((ctx->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		csp_log_error("%s[%s]: socket() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
@@ -175,8 +174,8 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 		socketcan_free(ctx);
 		return CSP_ERR_INVAL;
 	}
-
-	/* Set filter mode */
+	
+	/* Set filter mode */	
 	if (promisc == false) {
 
 		struct can_filter filter = {.can_id = CFP_MAKE_DST(csp_get_address()),
@@ -188,7 +187,7 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 			return CSP_ERR_INVAL;
 		}
 	}
-
+	
 	/* Add interface to CSP */
         int res = csp_can_add_interface(&ctx->iface);
 	if (res != CSP_ERR_NONE) {
@@ -214,7 +213,9 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 csp_iface_t * csp_can_socketcan_init(const char * device, int bitrate, bool promisc)
 {
 	csp_iface_t * return_iface;
+	
 	int res = csp_can_socketcan_open_and_add_interface(device, CSP_IF_CAN_DEFAULT_NAME, bitrate, promisc, &return_iface);
+	
 	return (res == CSP_ERR_NONE) ? return_iface : NULL;
 }
 
